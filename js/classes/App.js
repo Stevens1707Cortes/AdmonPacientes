@@ -10,6 +10,7 @@ import {
     formularioNuevaCita
 } from "../selectores.js";
 
+import { crearDB } from "../db/db.js";
 
 class App {
     constructor(){
@@ -18,6 +19,9 @@ class App {
 
     initApp(){
 
+        // Crear base de datos
+        crearDB();
+        
         // Para los inputs
         mascotaInput.addEventListener('change', datosCita);
         propietarioInput.addEventListener('change', datosCita);
