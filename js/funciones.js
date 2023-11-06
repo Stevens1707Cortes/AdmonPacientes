@@ -11,9 +11,10 @@ import {
     formularioNuevaCita
 } from "./selectores.js";
 
+import { DBCitas } from "./db/db.js";
 
 // Instanciar 
-const ui = new UI();
+export const ui = new UI();
 const administrarCitas = new Citas();
 
 // "Modo edicion"
@@ -67,6 +68,18 @@ export function nuevaCita(e) {
         // Pasar el objeto de la cita a edicion
         administrarCitas.actualizarCita({...citaObj});
 
+         //Actualizar registro en IndexDB
+
+         const transactionUpdate = DBCitas.transaction(['citas'], 'readwrite');
+
+         const objectStore = transactionUpdate.objectStore('citas');
+ 
+         objectStore.put(citaObj);
+ 
+         transactionUpdate.oncomplete = function() {
+             console.log('Cita actualizada');
+         }
+
         // Imprimir mensaje exitoso
         ui.imprimirAlerta('Cita editada exitosamente', 'correcto');
 
@@ -86,13 +99,28 @@ export function nuevaCita(e) {
         // Agregar nueva cita al arreglo de citas
         administrarCitas.agregarCita({...citaObj}); 
 
+        // Insertar Nueva cita en IndexedDB
+
+        const transaction = DBCitas.transaction(['citas'], 'readwrite');
+
+        // Habilitar el objectStore
+        const objectStore = transaction.objectStore('citas');
+
+        // Insertar registro en la base de datos
+        objectStore.add(citaObj);
+
+        transaction.oncomplete = function() {
+                console.log('Cita agregada');
+            }
+
+
         // Imprimir mensaje exitoso
         ui.imprimirAlerta('Cita agregada exitosamente', 'correcto');
     }
 
     // Imprimir nueva cita
 
-    ui.imprimirCitas(administrarCitas);
+    ui.imprimirCitas();
 
     // Reiniciar el formulario
 
@@ -115,14 +143,27 @@ export function reiniciarObjeto() {
 // Eliminar citas
 
 export function eliminarCita(id) {
-    // Eliminar cita del arreglo de citas
-    administrarCitas.eliminarCita(id);
 
-    // Muestra un mensaje
-    ui.imprimirAlerta('La cita se elimino exitosamente', 'correcto');
+     // Eliminar cita de la base de datos
 
-    // Eliminar del HTML
-    ui.imprimirCitas(administrarCitas);
+    const transactionDelete = DBCitas.transaction(['citas'], 'readwrite');
+    const objectStore = transactionDelete.objectStore('citas');
+
+    objectStore.delete(id);
+
+    transactionDelete.oncomplete = function () {
+        console.log(`Cita ${id} eliminada`);
+
+         // Muestra un mensaje
+        ui.imprimirAlerta('La cita se elimino exitosamente', 'correcto');
+          // Eliminar del HTML
+        ui.imprimirCitas();
+    }
+
+    transactionDelete.onerror = function () {
+        console.log('Hubo un error');
+    }
+
 }
 
 // Editar formulario
